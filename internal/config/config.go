@@ -9,17 +9,17 @@ import (
 
 type config struct {
 	DefaultProfile string    `yaml:"default_profile"`
-	Profiles       []profile `yaml:"credentials"`
+	Profiles       []Profile `yaml:"credentials"`
 }
 
-type profile struct {
+type Profile struct {
 	Name     string `yaml:"profile"`
 	ApiKey   string `yaml:"api_key"`
 	Provider string `yaml:"provider"`
 	Model    string `yaml:"model"`
 }
 
-func (c *config) GetProfile(name string) *profile {
+func (c *config) GetProfile(name string) *Profile {
 	for _, p := range c.Profiles {
 		if p.Name == name {
 			return &p
@@ -32,12 +32,12 @@ func (c *config) GetProfile(name string) *profile {
 func (c *config) AddProfile(name, provider, apiKey, model string) {
 	for i, p := range c.Profiles {
 		if p.Name == name {
-			c.Profiles[i] = profile{name, apiKey, provider, model}
+			c.Profiles[i] = Profile{name, apiKey, provider, model}
 			return
 		}
 	}
 
-	c.Profiles = append(c.Profiles, profile{name, apiKey, provider, model})
+	c.Profiles = append(c.Profiles, Profile{name, apiKey, provider, model})
 
 	if c.DefaultProfile == "" {
 		c.DefaultProfile = name

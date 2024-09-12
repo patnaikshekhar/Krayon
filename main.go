@@ -10,7 +10,6 @@ import (
 )
 
 func main() {
-
 	app := &cli.App{
 		Name:  "Krayon",
 		Usage: "Makes interacting with AI intuitive",
