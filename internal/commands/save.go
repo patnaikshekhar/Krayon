@@ -1,50 +1,29 @@
 package commands
 
 import (
-	"encoding/json"
-	"krayon/internal/config"
+	"fmt"
 	"krayon/internal/llm"
 	"os"
-	"path"
 	"strings"
 )
 
-func Save(userInput string, history []llm.Message, context string) error {
-	historyPath := ""
+func Save(userInput string, history []llm.Message) error {
+	filePath := ""
 	userInputParts := strings.Split(userInput, " ")
 	if len(userInputParts) < 2 {
 		// Save to default Krayon directory
-		basePath, err := config.GetConfigBasePath()
-		if err != nil {
-			return err
-		}
-
-		historyPath = path.Join(basePath, "history.json")
-
-	} else {
-		historyPath = userInputParts[1]
+		return fmt.Errorf("Please provide a path to save history to")
 	}
 
-	h := historyFormat{
-		Context: context,
-		History: history,
-	}
+	filePath = userInputParts[1]
 
-	historyBytes, err := json.Marshal(h)
-	if err != nil {
-		return err
-	}
+	aiResponse := history[len(history)-1].Content
 
-	err = os.WriteFile(historyPath, historyBytes, os.ModePerm)
+	err := os.WriteFile(filePath, []byte(aiResponse[0].Text), os.ModePerm)
 	if err != nil {
 		return err
 	}
 
 	return nil
 
-}
-
-type historyFormat struct {
-	Context string        `json:"context"`
-	History []llm.Message `json:"history"`
 }

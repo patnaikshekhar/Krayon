@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func Load(userInput string) ([]llm.Message, string, error) {
+func LoadHistory(userInput string) ([]llm.Message, string, error) {
 	historyPath := ""
 	userInputParts := strings.Split(userInput, " ")
 	if len(userInputParts) < 2 {
