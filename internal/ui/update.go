@@ -18,7 +18,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.viewport.Width = msg.Width
-		m.viewport.Height = msg.Height - 4
+		m.viewport.Height = msg.Height - 5
 		m.userInput.Width = msg.Width
 		m.viewport.SetContent(m.renderHistory())
 		m.viewport.GotoBottom()
@@ -26,9 +26,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
 			return m, tea.Quit
+		case tea.KeyUp:
+			if m.focusIndex == 1 {
+				if m.questionHistoryIndex > 0 {
+					m.questionHistoryIndex--
+					m.userInput.SetValue(m.questionHistory[m.questionHistoryIndex])
+				}
+			}
+		case tea.KeyDown:
+			if m.focusIndex == 1 {
+				if m.questionHistoryIndex < len(m.questionHistory)-1 {
+					m.questionHistoryIndex++
+					m.userInput.SetValue(m.questionHistory[m.questionHistoryIndex])
+				} else {
+					m.userInput.Reset()
+				}
+			}
 		case tea.KeyEnter:
 			if m.focusIndex == 1 {
-
+				if m.errorMessage != nil {
+					m.errorMessage = nil
+				}
 				// Check user action
 				userInput := strings.Trim(m.userInput.Value(), "\n")
 				if userInput == "/exit" || userInput == "/quit" {
@@ -36,13 +54,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				if strings.HasPrefix(userInput, "/include") {
-					newContext, err := commands.Include(userInput)
+					newContext, path, err := commands.Include(userInput)
 					if err != nil {
-						fmt.Printf("Error occured: %s", err)
+						m.errorMessage = err
 						return m, nil
 					}
 
 					m.context += newContext
+					m.contextItems = append(m.contextItems, path)
 					m.userInput.Reset()
 					return m, nil
 				}
@@ -50,6 +69,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if strings.HasPrefix(userInput, "/clear") {
 					m.history = []llm.Message{}
 					m.context = ""
+					m.contextItems = []string{}
 					m.viewport.SetContent(m.renderHistory())
 					m.userInput.Reset()
 					return m, nil
@@ -58,7 +78,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if strings.HasPrefix(userInput, "/save-history") {
 					err := commands.SaveHistory(userInput, m.history, m.context)
 					if err != nil {
-						fmt.Printf("Error saving history: %s", err)
+						m.errorMessage = err
 						m.viewport.SetContent(m.renderHistory())
 						m.userInput.Reset()
 						return m, nil
@@ -72,7 +92,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if strings.HasPrefix(userInput, "/save") {
 					err := commands.Save(userInput, m.history)
 					if err != nil {
-						fmt.Printf("Error saving response from AI: %s", err)
+						m.errorMessage = err
 						m.userInput.Reset()
 						return m, nil
 					}
@@ -82,11 +102,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				if strings.HasPrefix(userInput, "/load-history") {
-
 					var err error
 					m.history, m.context, err = commands.LoadHistory(userInput)
 					if err != nil {
-						fmt.Printf("Error loading from history: %s", err)
+						m.errorMessage = err
 						m.viewport.SetContent(m.renderHistory())
 						m.userInput.Reset()
 						return m, nil
@@ -98,10 +117,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, nil
 				}
 
+				commands.LogUserInput(userInput)
+				m.questionHistory = append(m.questionHistory, userInput)
+
 				if m.context != "" {
 					userInput = fmt.Sprintf("%s\n---Context---\n%s", userInput, m.context)
 					m.context = ""
+					m.contextItems = []string{}
 				}
+
 				m.history = append(m.history, llm.Message{
 					Role: "user",
 					Content: []llm.Content{
@@ -176,7 +200,10 @@ func (m *model) renderHistory() string {
 			role = userStyle.Render("  YOU")
 		}
 
-		contentMarkdown, err := markdown.RenderMarkdown(80, h.Content[0].Text)
+		// Strip content of --context---
+		contentParts := strings.Split(h.Content[0].Text, "\n---Context---\n")
+
+		contentMarkdown, err := markdown.RenderMarkdown(80, contentParts[0])
 		if err != nil {
 			log.Printf("Error rendering markdown: %s", err)
 		}

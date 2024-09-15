@@ -46,6 +46,13 @@ func main() {
 			},
 		},
 		Action: actions.Run,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "profile",
+				Usage:   "Select a profile",
+				Aliases: []string{"p"},
+			},
+		},
 	}
 
 	if err := app.Run(os.Args); err != nil {

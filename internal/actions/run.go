@@ -10,7 +10,9 @@ import (
 
 func Run(ctx *cli.Context) error {
 
-	model, err := ui.NewModel()
+	profile := ctx.String("profile")
+
+	model, err := ui.NewModel(profile)
 	if err != nil {
 		return err
 	}

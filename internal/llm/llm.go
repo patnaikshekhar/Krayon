@@ -15,6 +15,7 @@ type Message struct {
 }
 
 type Content struct {
+	Role        string                 `json:"role,omitempty"`
 	Text        string                 `json:"text,omitempty"`
 	ContentType string                 `json:"type,omitempty"`
 	Id          string                 `json:"id,omitempty"`
@@ -57,6 +58,8 @@ func GetProvider(provider, key string) (Provider, error) {
 	switch provider {
 	case "anthropic":
 		return NewAnthropic(key), nil
+	case "openai":
+		return NewOpenAI(key), nil
 	default:
 		return nil, fmt.Errorf("Unimplemented")
 	}
