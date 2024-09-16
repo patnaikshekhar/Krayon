@@ -1,11 +1,15 @@
 package commands
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/dslipak/pdf"
 )
 
 func Include(userInput string) (string, string, error) {
@@ -46,6 +50,27 @@ func Include(userInput string) (string, string, error) {
 }
 
 func readContent(fileName string) (string, error) {
+	extn := filepath.Ext(fileName)
+	if extn == ".pdf" {
+		pdfReader, err := pdf.Open(fileName)
+		if err != nil {
+			return "", err
+		}
+
+		reader, err := pdfReader.GetPlainText()
+		if err != nil {
+			return "", err
+		}
+
+		b := bytes.NewBuffer([]byte{})
+		_, err = io.Copy(b, reader)
+		if err != nil {
+			return "", err
+		}
+
+		return b.String(), nil
+	}
+
 	contents, err := os.ReadFile(fileName)
 	if err != nil {
 		return "", err
