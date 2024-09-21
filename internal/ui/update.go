@@ -54,13 +54,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				if strings.HasPrefix(userInput, "/include") {
-					newContext, path, err := commands.Include(userInput)
+					newContext, newSources, path, err := commands.Include(userInput)
 					if err != nil {
 						m.errorMessage = err
 						return m, nil
 					}
 
 					m.context += newContext
+					m.imageContext = append(m.imageContext, newSources...)
 					m.contextItems = append(m.contextItems, path)
 					m.userInput.Reset()
 					return m, nil
@@ -70,6 +71,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.history = []llm.Message{}
 					m.context = ""
 					m.contextItems = []string{}
+					m.imageContext = []llm.Source{}
 					m.viewport.SetContent(m.renderHistory())
 					m.userInput.Reset()
 					return m, nil
@@ -126,14 +128,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.contextItems = []string{}
 				}
 
-				m.history = append(m.history, llm.Message{
-					Role: "user",
-					Content: []llm.Content{
-						{
-							Text:        userInput,
-							ContentType: "text",
-						},
+				content := []llm.Content{
+					{
+						Text:        userInput,
+						ContentType: "text",
 					},
+				}
+
+				if m.imageContext != nil {
+					for _, m := range m.imageContext {
+						content = append(content, llm.Content{
+							ContentType: "image",
+							Source:      &m,
+						})
+					}
+					m.imageContext = []llm.Source{}
+				}
+
+				log.Printf("Content: %+v", content)
+
+				m.history = append(m.history, llm.Message{
+					Role:    "user",
+					Content: content,
 				})
 
 				m.userInput.Reset()

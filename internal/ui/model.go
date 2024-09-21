@@ -15,6 +15,7 @@ type model struct {
 
 	context      string
 	contextItems []string
+	imageContext []llm.Source
 
 	userInput textinput.Model
 

@@ -24,6 +24,13 @@ type Content struct {
 	Content     string                 `json:"content,omitempty"`
 	ToolUseId   string                 `json:"tool_use_id,omitempty"`
 	PartialJson *string                `json:"partial_json,omitempty"`
+	Source      *Source                `json:"source,omitempty"`
+}
+
+type Source struct {
+	Type      string `json:"type"`
+	MediaType string `json:"media_type"`
+	Data      string `json:"data"`
 }
 
 func (m *Content) MergeContentDelta(mc Content) {
