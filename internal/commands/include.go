@@ -148,5 +148,12 @@ func getPageContents(path string) (string, error) {
 		result += text
 	}
 
+	if err = browser.Close(); err != nil {
+		return "", err
+	}
+	if err = pw.Stop(); err != nil {
+		return "", err
+	}
+
 	return result, nil
 }
