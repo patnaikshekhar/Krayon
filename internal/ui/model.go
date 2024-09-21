@@ -6,8 +6,10 @@ import (
 	"krayon/internal/llm"
 
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type model struct {
@@ -32,6 +34,9 @@ type model struct {
 
 	questionHistory      []string
 	questionHistoryIndex int
+
+	readingContextSpinner spinner.Model
+	readingContext        bool
 }
 
 func NewModel(selectedProfile string) (*model, error) {
@@ -63,19 +68,25 @@ func NewModel(selectedProfile string) (*model, error) {
 	ta.KeyMap.PrevSuggestion = key.NewBinding(key.WithKeys("up"))
 	ta.KeyMap.NextSuggestion = key.NewBinding(key.WithKeys("down"))
 
+	includeContextSpinner := spinner.New()
+	includeContextSpinner.Spinner = spinner.Points
+	includeContextSpinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("#0000FF"))
+
 	vp := viewport.New(80, 20)
 
 	userLog := commands.GetUserLog()
 
 	return &model{
-		userInput:            ta,
-		provider:             provider,
-		profile:              profile,
-		chatRequestCh:        make(chan []llm.Message),
-		chatResponseCh:       make(chan string),
-		viewport:             vp,
-		focusIndex:           1,
-		questionHistory:      userLog,
-		questionHistoryIndex: len(userLog),
+		userInput:             ta,
+		provider:              provider,
+		profile:               profile,
+		chatRequestCh:         make(chan []llm.Message),
+		chatResponseCh:        make(chan string),
+		viewport:              vp,
+		focusIndex:            1,
+		questionHistory:       userLog,
+		questionHistoryIndex:  len(userLog),
+		readingContextSpinner: includeContextSpinner,
+		readingContext:        false,
 	}, nil
 }

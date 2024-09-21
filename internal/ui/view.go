@@ -21,11 +21,15 @@ func (m model) View() string {
 	}
 
 	contextItemsText := ""
-	if len(m.contextItems) > 0 {
-		contextItemsText = contextItemsStyle.Render("Included:")
-	}
-	for _, item := range m.contextItems {
-		contextItemsText += fmt.Sprintf(" %s", item)
+	if m.readingContext {
+		contextItemsText = m.readingContextSpinner.View()
+	} else {
+		if len(m.contextItems) > 0 {
+			contextItemsText = contextItemsStyle.Render("Included:")
+		}
+		for _, item := range m.contextItems {
+			contextItemsText += fmt.Sprintf(" %s", item)
+		}
 	}
 
 	return fmt.Sprintf(

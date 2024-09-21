@@ -7,6 +7,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/philistino/teacup/markdown"
@@ -54,17 +55,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 
 				if strings.HasPrefix(userInput, "/include") {
-					newContext, newSources, path, err := commands.Include(userInput)
-					if err != nil {
-						m.errorMessage = err
-						return m, nil
-					}
-
-					m.context += newContext
-					m.imageContext = append(m.imageContext, newSources...)
-					m.contextItems = append(m.contextItems, path)
 					m.userInput.Reset()
-					return m, nil
+					m.readingContext = true
+					return m, tea.Batch(
+						m.readingContextSpinner.Tick,
+						handleInclude(userInput),
+					)
 				}
 
 				if strings.HasPrefix(userInput, "/clear") {
@@ -145,8 +141,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.imageContext = []llm.Source{}
 				}
 
-				log.Printf("Content: %+v", content)
-
 				m.history = append(m.history, llm.Message{
 					Role:    "user",
 					Content: content,
@@ -188,6 +182,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetContent(m.renderHistory())
 		m.viewport.GotoBottom()
 		return m, m.chatResponseHandler()
+	case includeResultMsg:
+		if msg.err != nil {
+			m.errorMessage = msg.err
+			return m, nil
+		}
+
+		m.context += msg.newContext
+		m.imageContext = append(m.imageContext, msg.newSources...)
+		m.contextItems = append(m.contextItems, msg.path)
+		m.readingContext = false
+		return m, nil
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		if m.readingContext {
+			m.readingContextSpinner, cmd = m.readingContextSpinner.Update(msg)
+		}
+		return m, cmd
 	}
 
 	if m.focusIndex == 0 {
@@ -231,4 +242,21 @@ func (m *model) renderHistory() string {
 	}
 
 	return history
+}
+
+func handleInclude(userInput string) tea.Cmd {
+	return func() tea.Msg {
+		newContext, newSources, path, err := commands.Include(userInput)
+		if err != nil {
+			return includeResultMsg{
+				err: err,
+			}
+		}
+
+		return includeResultMsg{
+			newContext: newContext,
+			newSources: newSources,
+			path:       path,
+		}
+	}
 }

@@ -101,11 +101,16 @@ func readContent(fileName string) (string, *llm.Source, error) {
 	}
 
 	if extn == ".jpeg" || extn == ".jpg" || extn == ".png" {
+		mediaType := map[string]string{
+			".jpeg": "image/jpeg",
+			".jpg":  "image/jpeg",
+			".png":  "image/png",
+		}
 		// Convert to base64 format and return
 		return "", &llm.Source{
 			Type:      "base64",
 			Data:      base64.StdEncoding.EncodeToString(contents),
-			MediaType: "image/jpeg",
+			MediaType: mediaType[extn],
 		}, nil
 	}
 

@@ -29,8 +29,6 @@ func (m model) chatRequestHandler() tea.Cmd {
 	}
 }
 
-type ChatDelta string
-
 func (m model) chatResponseHandler() tea.Cmd {
 	return func() tea.Msg {
 		delta := <-m.chatResponseCh
