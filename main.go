@@ -41,6 +41,11 @@ func main() {
 						Usage:   "Enter the name of the profile",
 						Aliases: []string{"n"},
 					},
+					&cli.BoolFlag{
+						Name:    "stream",
+						Usage:   "Should stream",
+						Aliases: []string{"s"},
+					},
 				},
 				Action: actions.Init,
 			},

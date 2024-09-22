@@ -1,8 +1,8 @@
 package actions
 
 import (
-	"fmt"
 	"krayon/internal/ui"
+	"log"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/urfave/cli/v2"
@@ -19,7 +19,7 @@ func Run(ctx *cli.Context) error {
 
 	f, err := tea.LogToFile("debug.log", "debug")
 	if err != nil {
-		fmt.Println("fatal:", err)
+		log.Printf("fatal: %s", err)
 		return err
 	}
 	defer f.Close()

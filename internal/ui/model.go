@@ -55,7 +55,7 @@ func NewModel(selectedProfile string) (*model, error) {
 
 	profile := cfg.GetProfile(selectedProfile)
 
-	provider, err := llm.GetProvider(profile.Provider, profile.ApiKey)
+	provider, err := llm.GetProvider(profile.Provider, profile.ApiKey, profile.Stream)
 	if err != nil {
 		return nil, err
 	}

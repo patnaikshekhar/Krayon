@@ -12,6 +12,7 @@ func Init(ctx *cli.Context) error {
 	provider := ctx.String("provider")
 	name := ctx.String("name")
 	model := ctx.String("model")
+	stream := ctx.Bool("stream")
 
 	if name == "" {
 		fmt.Println("Please enter the Name to use for this profile: ")
@@ -35,7 +36,7 @@ func Init(ctx *cli.Context) error {
 	}
 
 	// Update Config
-	cfg.AddProfile(name, provider, key, model)
+	cfg.AddProfile(name, provider, key, model, stream)
 
 	return nil
 }

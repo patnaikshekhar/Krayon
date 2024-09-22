@@ -61,12 +61,12 @@ type Tool struct {
 	Schema      map[string]interface{} `json:"input_schema"`
 }
 
-func GetProvider(provider, key string) (Provider, error) {
+func GetProvider(provider, key string, stream bool) (Provider, error) {
 	switch provider {
 	case "anthropic":
 		return NewAnthropic(key), nil
 	case "openai":
-		return NewOpenAI(key), nil
+		return NewOpenAI(key, stream), nil
 	default:
 		return nil, fmt.Errorf("Unimplemented")
 	}

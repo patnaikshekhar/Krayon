@@ -17,6 +17,7 @@ type Profile struct {
 	ApiKey   string `yaml:"api_key"`
 	Provider string `yaml:"provider"`
 	Model    string `yaml:"model"`
+	Stream   bool   `yaml:"stream"`
 }
 
 func (c *config) GetProfile(name string) *Profile {
@@ -29,15 +30,15 @@ func (c *config) GetProfile(name string) *Profile {
 	return nil
 }
 
-func (c *config) AddProfile(name, provider, apiKey, model string) {
+func (c *config) AddProfile(name, provider, apiKey, model string, stream bool) {
 	for i, p := range c.Profiles {
 		if p.Name == name {
-			c.Profiles[i] = Profile{name, apiKey, provider, model}
+			c.Profiles[i] = Profile{name, apiKey, provider, model, stream}
 			return
 		}
 	}
 
-	c.Profiles = append(c.Profiles, Profile{name, apiKey, provider, model})
+	c.Profiles = append(c.Profiles, Profile{name, apiKey, provider, model, stream})
 
 	if c.DefaultProfile == "" {
 		c.DefaultProfile = name

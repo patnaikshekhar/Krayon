@@ -53,6 +53,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Batch(
 					m.readingContextSpinner.Tick,
 					handleInclude("/include "+selectedItem.title),
+					m.userInput.Focus(),
 				)
 			}
 
