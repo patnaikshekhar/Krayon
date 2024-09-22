@@ -6,7 +6,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+var listStyle = lipgloss.NewStyle().Margin(1, 2)
+
 func (m model) View() string {
+	if m.modePickfile {
+		return listStyle.Render(m.fileList.View())
+	}
+
 	var errorMessageStyle = lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("9"))

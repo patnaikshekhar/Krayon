@@ -6,6 +6,7 @@ import (
 	"krayon/internal/llm"
 
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -37,6 +38,9 @@ type model struct {
 
 	readingContextSpinner spinner.Model
 	readingContext        bool
+
+	modePickfile bool
+	fileList     list.Model
 }
 
 func NewModel(selectedProfile string) (*model, error) {
@@ -72,6 +76,9 @@ func NewModel(selectedProfile string) (*model, error) {
 	includeContextSpinner.Spinner = spinner.Points
 	includeContextSpinner.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("#0000FF"))
 
+	fileList := list.New(getAllFiles(), list.NewDefaultDelegate(), 0, 0)
+	fileList.Title = "Select a file"
+
 	vp := viewport.New(80, 20)
 
 	userLog := commands.GetUserLog()
@@ -88,5 +95,6 @@ func NewModel(selectedProfile string) (*model, error) {
 		questionHistoryIndex:  len(userLog),
 		readingContextSpinner: includeContextSpinner,
 		readingContext:        false,
+		fileList:              fileList,
 	}, nil
 }

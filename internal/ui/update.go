@@ -18,6 +18,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		h, v := listStyle.GetFrameSize()
+		m.fileList.SetSize(msg.Width-h, msg.Height-v)
 		m.viewport.Width = msg.Width
 		m.viewport.Height = msg.Height - 5
 		m.userInput.Width = msg.Width
@@ -44,6 +46,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		case tea.KeyEnter:
+			if m.modePickfile {
+				m.modePickfile = false
+				selectedItem := m.fileList.SelectedItem().(item)
+				m.readingContext = true
+				return m, tea.Batch(
+					m.readingContextSpinner.Tick,
+					handleInclude("/include "+selectedItem.title),
+				)
+			}
+
 			if m.focusIndex == 1 {
 				if m.errorMessage != nil {
 					m.errorMessage = nil
@@ -56,6 +68,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 				if strings.HasPrefix(userInput, "/include") {
 					m.userInput.Reset()
+
+					components := strings.Split(userInput, " ")
+					if len(components) < 2 {
+						m.modePickfile = true
+						m.fileList, cmd = m.fileList.Update(msg)
+						return m, cmd
+					}
+
 					m.readingContext = true
 					return m, tea.Batch(
 						m.readingContextSpinner.Tick,
@@ -201,6 +221,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 
+	if m.modePickfile {
+		var cmd tea.Cmd
+		m.fileList, cmd = m.fileList.Update(msg)
+		return m, cmd
+	}
 	if m.focusIndex == 0 {
 		m.viewport, cmd = m.viewport.Update(msg)
 	} else {

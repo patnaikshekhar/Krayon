@@ -10,3 +10,5 @@ type includeResultMsg struct {
 	newSources []llm.Source
 	path       string
 }
+
+type FoldersAndFiles []string
