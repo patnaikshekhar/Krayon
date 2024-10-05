@@ -27,6 +27,10 @@ func (oai *openai) Chat(ctx context.Context, model string, temperature int32, me
 	// Map to OpenAI Format
 	var oaiMessages []OpenAIMessage
 	for _, m := range messages {
+		if m.Role == "plugin" {
+			continue
+		}
+
 		var oaiContent []OpenAIContent
 		for _, c := range m.Content {
 			if c.ContentType == "text" {

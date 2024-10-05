@@ -10,8 +10,9 @@ type Provider interface {
 }
 
 type Message struct {
-	Role    string    `json:"role"`
-	Content []Content `json:"content"`
+	Role       string    `json:"role"`
+	PluginName string    `json:"plugin_name,omitempty"`
+	Content    []Content `json:"content"`
 }
 
 type Content struct {

@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+option go_package = "krayon/internal/plugins";
+
+package plugins;
+service Plugin {
+  rpc Run (RunRequest) returns (stream RunEvent) {}
+}
+
+message RunRequest {
+  string userAsk = 1;
+  repeated Message history = 2;
+  string currentDirectory = 3;
+}
+
+message RunEvent {
+  oneof event {
+    ShowOutput showOutput = 1;
+    ShowError showError = 2;
+    RequestUserInput requestUserInput = 3;
+    MakeLLMCall makeLLMCall = 4;
+  };
+}
+
+message ShowOutput {
+    string output = 1;
+}
+
+message ShowError {
+    string error = 1;
+}
+
+message RequestUserInput {
+    string question = 1;
+}
+
+message MakeLLMCall {
+    repeated Message history = 1;
+}
+
+message Message {
+    string role = 1;
+    string text = 2;
+}

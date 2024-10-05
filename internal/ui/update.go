@@ -63,6 +63,29 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				// Check user action
 				userInput := strings.Trim(m.userInput.Value(), "\n")
+
+				// Check if plugin mentioned?
+				for _, plugin := range m.plugins {
+					if strings.Contains(userInput, "@"+plugin.Name) {
+						// Call plugin
+						m.history = append(m.history, llm.Message{
+							Role:       "plugin",
+							PluginName: "@" + plugin.Name,
+							Content: []llm.Content{
+								{
+									Text:        "",
+									ContentType: "text",
+								},
+							},
+						})
+						m.userInput.Reset()
+						return m, tea.Batch(
+							m.ExecutePlugin(plugin, userInput),
+							m.pluginResponseHandler(),
+						)
+					}
+				}
+
 				if userInput == "/exit" || userInput == "/quit" {
 					return m, tea.Quit
 				}
@@ -203,6 +226,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.viewport.SetContent(m.renderHistory())
 		m.viewport.GotoBottom()
 		return m, m.chatResponseHandler()
+	case PluginDelta:
+		if msg == "<done>" {
+			return m, nil
+		}
+		m.history[len(m.history)-1].Content[0].Text += string(msg)
+		m.viewport.SetContent(m.renderHistory())
+		m.viewport.GotoBottom()
+		return m, m.pluginResponseHandler()
+
 	case includeResultMsg:
 		if msg.err != nil {
 			m.errorMessage = msg.err
@@ -244,6 +276,10 @@ func (m *model) renderHistory() string {
 		Bold(true).
 		Foreground(lipgloss.Color("5"))
 
+	var pluginStyle = lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("9"))
+
 	history := ""
 	for _, h := range m.history {
 		role := ""
@@ -251,6 +287,8 @@ func (m *model) renderHistory() string {
 			role = aiStyle.Render("  ֍ AI")
 		} else if h.Role == "user" {
 			role = userStyle.Render("  YOU")
+		} else if h.Role == "plugin" {
+			role = pluginStyle.Render(fmt.Sprintf("  %s says:", strings.ToUpper(h.PluginName)))
 		}
 
 		// Strip content of --context---
@@ -266,6 +304,8 @@ func (m *model) renderHistory() string {
 	if history == "" {
 		history = "Welcome to Krayon!\n\n"
 	}
+
+	log.Printf("Rendering history %+v", m.history)
 
 	return history
 }

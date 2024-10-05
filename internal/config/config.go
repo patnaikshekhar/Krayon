@@ -10,6 +10,7 @@ import (
 type config struct {
 	DefaultProfile string    `yaml:"default_profile"`
 	Profiles       []Profile `yaml:"credentials"`
+	PluginsServer  string    `yaml:"plugins_server"`
 }
 
 type Profile struct {

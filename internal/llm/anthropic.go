@@ -31,6 +31,10 @@ func (a *anthropic) Chat(ctx context.Context, model string, temperature int32, m
 			continue
 		}
 
+		if sm.Role == "plugin" {
+			continue
+		}
+
 		cleansedMessages = append(cleansedMessages, sm)
 	}
 

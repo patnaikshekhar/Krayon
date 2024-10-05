@@ -4,6 +4,7 @@ import (
 	"krayon/internal/commands"
 	"krayon/internal/config"
 	"krayon/internal/llm"
+	"krayon/internal/plugins"
 
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -30,6 +31,8 @@ type model struct {
 	chatRequestCh  chan []llm.Message
 	chatResponseCh chan string
 
+	pluginResponseCh chan string
+
 	viewport   viewport.Model
 	focusIndex int // 0: viewport, 1: userInput
 
@@ -41,23 +44,22 @@ type model struct {
 
 	modePickfile bool
 	fileList     list.Model
+
+	plugins            []plugins.ManifestPlugin
+	pluginStartChannel chan plugins.RequestInfo
+	socketPath         string
 }
 
-func NewModel(selectedProfile string) (*model, error) {
-	cfg, err := config.Load()
+func NewModel(provider llm.Provider, profile *config.Profile, pluginStartChannel chan plugins.RequestInfo, socketPath string, pluginResponseCh chan string) (*model, error) {
+	pluginsManifest, err := plugins.LoadManifest()
 	if err != nil {
 		return nil, err
 	}
 
-	if selectedProfile == "" {
-		selectedProfile = cfg.DefaultProfile
-	}
-
-	profile := cfg.GetProfile(selectedProfile)
-
-	provider, err := llm.GetProvider(profile.Provider, profile.ApiKey, profile.Stream)
-	if err != nil {
-		return nil, err
+	suggestions := []string{"/include", "/exit", "/explain", "/clear", "/save-history", "/load-history", "/quit", "/save"}
+	for _, pn := range pluginsManifest.Plugins {
+		n := "@" + pn.Name
+		suggestions = append(suggestions, n)
 	}
 
 	ta := textinput.New()
@@ -66,7 +68,7 @@ func NewModel(selectedProfile string) (*model, error) {
 	ta.Focus()
 	ta.CharLimit = 280
 	ta.ShowSuggestions = true
-	ta.SetSuggestions([]string{"/include", "/exit", "/explain", "/clear", "/save-history", "/load-history", "/quit", "/save"})
+	ta.SetSuggestions(suggestions)
 	ta.KeyMap.AcceptSuggestion.SetEnabled(true)
 	ta.KeyMap.AcceptSuggestion = key.NewBinding(key.WithKeys("right"))
 	ta.KeyMap.PrevSuggestion = key.NewBinding(key.WithKeys("up"))
@@ -96,5 +98,9 @@ func NewModel(selectedProfile string) (*model, error) {
 		readingContextSpinner: includeContextSpinner,
 		readingContext:        false,
 		fileList:              fileList,
+		plugins:               pluginsManifest.Plugins,
+		pluginStartChannel:    pluginStartChannel,
+		socketPath:            socketPath,
+		pluginResponseCh:      pluginResponseCh,
 	}, nil
 }
